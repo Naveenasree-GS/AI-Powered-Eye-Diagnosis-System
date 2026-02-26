@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Eye Diagnosis System</title>
+    <link rel="icon" href="eye.webp">
+    <link rel="stylesheet" href="style.css">
+    <script async src="https://webgazer.cs.brown.edu/webgazer.js"></script>
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">👁️ EyeCare AI</div>
+            <ul class="nav-menu">
+                <li><a href="#scanner" class="nav-link">Scanner</a></li>
+                <li><a href="#diagnosis" class="nav-link">Diagnosis</a></li>
+                <li><a href="#consultation" class="nav-link">Consultation</a></li>
+            </ul>
+            <div id="healthStatus" class="health-status" title="Backend Server Status">
+                <span id="healthIndicator" class="health-indicator loading"></span>
+                <span id="healthText">Checking...</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="hero-header">
+        <div class="hero-content">
+            <h1>AI-Powered Eye Diagnosis System</h1>
+            <p>Advanced eye scanning, real-time analysis, and professional doctor consultations</p>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+
+        <!-- Tab Navigation -->
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('scanner')">👁️ Eye Scanner</button>
+            <button class="tab-btn" onclick="switchTab('diagnosis')">🔬 Diagnosis</button>
+            <button class="tab-btn" onclick="switchTab('consultation')">👨‍⚕️ Doctor Consultation</button>
+            <button class="tab-btn" onclick="switchTab('patients')">👥 Patients</button>
+            <button class="tab-btn" onclick="switchTab('feedback')">💬 Feedback</button>
+        </div>
+
+        <!-- Scanner Tab -->
+        <section id="scanner" class="tab-content active">
+            <div class="content-wrapper">
+                <div class="scanner-container">
+                    <h2>Real-Time Eye Scanner</h2>
+                    <p class="section-subtitle">Position your face in front of camera for advanced eye tracking</p>
+
+                    <video id="eyeScanner" class="eye-video"></video>
+                    <canvas id="gazeCanvas" width="400" height="300" style="display: none;"></canvas>
+
+                    <div class="scanner-controls">
+                        <button class="btn btn-primary" onclick="startEyeScanning()">▶ Start Scan</button>
+                        <button class="btn btn-secondary" onclick="stopEyeScanning()">⏹ Stop Scan</button>
+                        <button class="btn btn-accent" onclick="calibrateEyes()">🎯 Calibrate Eyes</button>
+                    </div>
+
+                    <div class="retinal-analysis-box"
+                        style="margin-top: 1.5rem; padding: 1.5rem; background: #f0f7ff; border: 2px dashed #2196f3; border-radius: 12px; text-align: center;">
+                        <h4>📜 Retinal Power Analysis</h4>
+                        <p style="font-size: 0.85rem; color: #555; margin-bottom: 1rem;">Upload a retinal image to check
+                            refractive power and sight status.</p>
+
+                        <div style="margin-bottom: 1rem; max-width: 300px; margin-left: auto; margin-right: auto;">
+                            <input type="text" id="retinalPatientName" placeholder="Enter Patient Name (Optional)"
+                                style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+
+                        <input type="file" id="retinalImage" accept="image/*" style="display: none;"
+                            onchange="analyzeRetinalPower(this)">
+                        <button class="btn btn-primary" onclick="document.getElementById('retinalImage').click()">📁
+                            Upload Eye Image</button>
+
+                        <div id="retinalResults"
+                            style="display: none; margin-top: 1rem; text-align: left; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <!-- Results injected here -->
+                        </div>
+                    </div>
+
+                    <div class="scanner-metrics">
+                        <div class="metric-card">
+                            <span class="metric-label">Status</span>
+                            <span class="metric-value" id="statusText" style="font-size: 1rem;">Ready</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label">Tracking</span>
+                            <span class="metric-value" id="gazeText">--</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label">Confidence</span>
+                            <span class="metric-value" id="confidenceText">0%</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label">Signal Status</span>
+                            <div class="signal-meter"
+                                style="height: 10px; background: #eee; border-radius: 5px; margin-top: 10px; overflow: hidden;">
+                                <div id="signalBar"
+                                    style="width: 0%; height: 100%; background: #f44336; transition: all 0.3s ease;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="scanProgressContainer" style="margin-top: 1.5rem; display: none;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span style="font-size: 0.85rem; font-weight: 600; color: #667eea;">Scan Progress</span>
+                            <span id="progressPercent"
+                                style="font-size: 0.85rem; font-weight: 600; color: #667eea;">0%</span>
+                        </div>
+                        <div style="height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                            <div id="scanProgressBar"
+                                style="width: 0%; height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.3s ease;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Diagnosis Tab -->
+        <section id="diagnosis" class="tab-content">
+            <div class="content-wrapper">
+                <div class="diagnosis-grid">
+
+                    <!-- Patient Information Card -->
+                    <div class="form-card">
+                        <h3>📋 Patient Information</h3>
+                        <form>
+                            <div class="form-group">
+                                <label for="name">Patient Name *</label>
+                                <input type="text" id="name" placeholder="Enter full name" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="age">Age *</label>
+                                    <input type="number" id="age" placeholder="Age" min="1" max="150" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="gender">Gender</label>
+                                    <select id="gender">
+                                        <option>Select</option>
+                                        <option>Male</option>
+                                        <option>Female</option>
+                                        <option>Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="problemDesc">Eye Problem Description</label>
+                                <textarea id="problemDesc" placeholder="Describe any eye problems or symptoms..."
+                                    rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Image Upload Card -->
+                    <div class="form-card">
+                        <h3>🖼️ Eye Image Analysis</h3>
+                        <div class="upload-area">
+                            <input type="file" id="eyeImage" class="file-input" accept="image/*">
+                            <p>Click to upload or drag image</p>
+                        </div>
+                        <button class="btn btn-primary btn-full" onclick="analyzeImage()">🔍 Analyze Image</button>
+
+                        <div id="result" class="analysis-result"></div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                            <button class="btn btn-secondary btn-full" onclick="exportMedicalReport()">📥 Export
+                                Report</button>
+                            <button class="btn btn-accent btn-full"
+                                onclick="document.getElementById('uploadReportFile').click()">📤 Load Report</button>
+                            <input type="file" id="uploadReportFile" accept=".json" style="display: none;"
+                                onchange="handleReportUpload(this)">
+                        </div>
+                        <button class="btn btn-secondary btn-full" style="margin-top: 1rem;"
+                            onclick="clearAllData()">🗑️ Clear Data</button>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Consultation Tab -->
+        <section id="consultation" class="tab-content">
+            <div class="content-wrapper">
+                <div class="consultation-container">
+                    <h2>Book Doctor Consultation</h2>
+                    <p class="section-subtitle">Schedule an appointment with our specialist doctors</p>
+
+                    <div class="doctors-grid">
+                        <!-- Doctor 1 -->
+                        <div class="doctor-card">
+                            <div class="doctor-avatar">Dr. K</div>
+                            <h3>Dr. Kumar</h3>
+                            <p class="specialty">Ophthalmologist</p>
+                            <div class="doctor-info">
+                                <p>📋 Experience: 15+ years</p>
+                                <p>⭐ Rating: 4.8/5</p>
+                            </div>
+                            <button class="btn btn-primary" onclick="selectDoctor('Dr. Kumar')">Book Now</button>
+                        </div>
+
+                        <!-- Doctor 2 -->
+                        <div class="doctor-card">
+                            <div class="doctor-avatar">Dr. P</div>
+                            <h3>Dr. Priya</h3>
+                            <p class="specialty">Eye Specialist</p>
+                            <div class="doctor-info">
+                                <p>📋 Experience: 12+ years</p>
+                                <p>⭐ Rating: 4.9/5</p>
+                            </div>
+                            <button class="btn btn-primary" onclick="selectDoctor('Dr. Priya')">Book Now</button>
+                        </div>
+
+                        <!-- Doctor 3 -->
+                        <div class="doctor-card">
+                            <div class="doctor-avatar">Dr. S</div>
+                            <h3>Dr. Singh</h3>
+                            <p class="specialty">Retina Specialist</p>
+                            <div class="doctor-info">
+                                <p>📋 Experience: 18+ years</p>
+                                <p>⭐ Rating: 4.7/5</p>
+                            </div>
+                            <button class="btn btn-primary" onclick="selectDoctor('Dr. Singh')">Book Now</button>
+                        </div>
+                    </div>
+
+                    <!-- Appointment Form -->
+                    <div class="appointment-form">
+                        <h3>Appointment Details</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="selectedDoctor">Selected Doctor</label>
+                                <input type="text" id="selectedDoctor" placeholder="Select doctor first" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="appointmentDate">Preferred Date *</label>
+                                <input type="date" id="appointmentDate" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointmentTime">Preferred Time *</label>
+                            <input type="time" id="appointmentTime" required>
+                        </div>
+                        <button class="btn btn-primary btn-full" onclick="bookAppointment()">✓ Confirm
+                            Appointment</button>
+
+                        <div id="bookingConfirmation"
+                            style="display: none; margin-top: 1.5rem; background: #e8f5e9; border: 2px solid #4caf50; padding: 1.5rem; border-radius: 8px;">
+                            <h4 style="color: #2e7d32; margin-bottom: 0.5rem;">✅ Booking Confirmed!</h4>
+                            <div id="confirmationText" style="font-size: 0.9rem; color: #333;"></div>
+                            <p style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">All patient data and scan
+                                results have been saved to the hospital database.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Patients Tab -->
+        <section id="patients" class="tab-content">
+            <div class="content-wrapper">
+                <div class="patients-container">
+                    <h2>Patient Database</h2>
+                    <p class="section-subtitle">View and manage all registered patient records</p>
+
+                    <div class="search-bar-container"
+                        style="display: flex; gap: 10px; margin-bottom: 20px; max-width: 600px;">
+                        <input type="text" id="patientSearchInput" placeholder="Search by Patient Name or Diagnosis..."
+                            style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;"
+                            onkeyup="if(event.key === 'Enter') window.app.searchPatients()">
+                        <button class="btn btn-primary" onclick="window.app.searchPatients()">🔍 Search</button>
+                        <button class="btn btn-secondary" onclick="window.app.resetPatientView()">🔄 Reset</button>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="patients-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Age</th>
+                                    <th>Diagnosis</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="patientsList">
+                                <!-- Patient rows will be populated here -->
+                            </tbody>
+                        </table>
+                        <div id="noPatientsMsg" style="text-align: center; padding: 2rem; color: #666; display: none;">
+                            No patient records found.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient Detail Modal -->
+            <div id="patientModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close-modal" onclick="closePatientModal()">&times;</span>
+                    <h3 id="modalTitle">Patient Details</h3>
+                    <div id="modalBody" class="modal-body">
+                        <!-- Details injected here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feedback Tab -->
+        <section id="feedback" class="tab-content">
+            <div class="content-wrapper">
+                <div class="form-card" style="max-width: 800px; margin: 0 auto;">
+                    <h2>How was your experience?</h2>
+                    <p class="section-subtitle">We value your feedback to improve our AI Eye Care system.</p>
+
+                    <form id="feedbackForm" onsubmit="event.preventDefault(); submitFeedback();">
+                        <div class="form-group">
+                            <label>Overall Satisfaction</label>
+                            <div class="rating-container" style="display: flex; gap: 1rem; margin: 1rem 0;">
+                                <label
+                                    style="cursor: pointer; display: flex; flex-direction: column; align-items: center;">
+                                    <input type="radio" name="satisfaction" value="5" required> 😍 Excellent
+                                </label>
+                                <label
+                                    style="cursor: pointer; display: flex; flex-direction: column; align-items: center;">
+                                    <input type="radio" name="satisfaction" value="4"> 😊 Good
+                                </label>
+                                <label
+                                    style="cursor: pointer; display: flex; flex-direction: column; align-items: center;">
+                                    <input type="radio" name="satisfaction" value="3"> 😐 Average
+                                </label>
+                                <label
+                                    style="cursor: pointer; display: flex; flex-direction: column; align-items: center;">
+                                    <input type="radio" name="satisfaction" value="2"> 🙁 Poor
+                                </label>
+                                <label
+                                    style="cursor: pointer; display: flex; flex-direction: column; align-items: center;">
+                                    <input type="radio" name="satisfaction" value="1"> 😠 Very Bad
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="feedbackText">Comments or Suggestions</label>
+                            <textarea id="feedbackText" placeholder="What did you like? What can we improve?" rows="5"
+                                required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-full">Submit Feedback</button>
+                    </form>
+
+                    <div id="feedbackThanks" style="display: none; text-align: center; padding: 2rem;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+                        <h3 style="color: #4caf50;">Thank You for Your Feedback!</h3>
+                        <p>Your input helps us make eye care better for everyone.</p>
+                        <button class="btn btn-secondary" style="margin-top: 1rem;" onclick="location.reload()">Send
+                            Another</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About Us</h4>
+                <p>Advanced AI technology for eye health diagnosis and professional medical consultation.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Services</h4>
+                <ul>
+                    <li>Eye Scanning</li>
+                    <li>AI Diagnosis</li>
+                    <li>Doctor Consultation</li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <p>Email: info@eyecareai.com</p>
+                <p>Phone: +1-800-EYECARE</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 AI Eye Care System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="demo.js"></script>
+    <script src="js/image-processor.js"></script>
+    <script src="app.js"></script>
+    <script src="js/eye-scanner.js"></script>
+</body>
+
+</html>
