@@ -1,0 +1,8 @@
+{
+    "diagnosis":  "Healthy",
+    "confidence":  99,
+    "patient":  {
+                    "age":  30,
+                    "name":  "Test User"
+                }
+}
