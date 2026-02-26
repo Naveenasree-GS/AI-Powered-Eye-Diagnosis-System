@@ -1,0 +1,47 @@
+[
+    {
+        "range": "Normal",
+        "min_power": -0.50,
+        "max_power": 0.50,
+        "status": "NORMAL",
+        "sight_type": "EMMETROPIA (Normal Sight)",
+        "description": "The eye focuses light correctly on the retina. No corrective lenses required.",
+        "recommendation": "Continue regular annual eye checkups. Maintain healthy screen habits."
+    },
+    {
+        "range": "Mild Myopia",
+        "min_power": -2.00,
+        "max_power": -0.51,
+        "status": "ABNORMAL",
+        "sight_type": "MILD MYOPIA (Negative Sight)",
+        "description": "Distal objects appear blurry. Light focuses in front of the retina.",
+        "recommendation": "Prescriptive glasses for distance vision. Follow 20-20-20 rule for screen use."
+    },
+    {
+        "range": "High Myopia",
+        "min_power": -6.00,
+        "max_power": -2.01,
+        "status": "ABNORMAL",
+        "sight_type": "HIGH MYOPIA (Negative Sight)",
+        "description": "Severe distance blur. Increased risk of retinal thinning.",
+        "recommendation": "Urgent consultation with an optometrist. High-index corrective lenses required."
+    },
+    {
+        "range": "Mild Hyperopia",
+        "min_power": 0.51,
+        "max_power": 2.00,
+        "status": "ABNORMAL",
+        "sight_type": "MILD HYPEROPIA (Positive Sight)",
+        "description": "Near objects may appear blurry. Extra focusing effort required.",
+        "recommendation": "Reading glasses may be needed. Monitor for eye strain and headaches."
+    },
+    {
+        "range": "High Hyperopia",
+        "min_power": 2.01,
+        "max_power": 6.00,
+        "status": "ABNORMAL",
+        "sight_type": "HIGH HYPEROPIA (Positive Sight)",
+        "description": "Significant blur at all distances, especially near. Light focuses behind retina.",
+        "recommendation": "Corrective convex lenses required immediately to prevent amblyopia."
+    }
+]
