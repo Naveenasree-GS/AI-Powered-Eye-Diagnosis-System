@@ -1,0 +1,338 @@
+[
+    {
+        "name": "Cataract",
+        "keywords": [
+            "cloudy",
+            "blur",
+            "fading",
+            "cataract",
+            "glare",
+            "foggy",
+            "dim",
+            "hazy",
+            "double",
+            "night"
+        ],
+        "min_confidence": 85,
+        "max_confidence": 98,
+        "findings": [
+            "Clouding of the lens identified",
+            "Decreased visual acuity",
+            "Significant glare sensitivity",
+            "Yellowing of colors",
+            "Formation of protein clumps on lens"
+        ],
+        "recommendation": "Consult an ophthalmologist for potential cataract surgery. Monitor progression."
+    },
+    {
+        "name": "Glaucoma",
+        "keywords": [
+            "tunnel",
+            "halo",
+            "pressure",
+            "glaucoma",
+            "peripheral",
+            "pain",
+            "silent",
+            "rainbow",
+            "vomit",
+            "headache"
+        ],
+        "min_confidence": 80,
+        "max_confidence": 95,
+        "findings": [
+            "Elevated intraocular pressure detected",
+            "Optic nerve cupping signs",
+            "Peripheral vision loss indications",
+            "Corneal edema",
+            "Damage to optic nerve fibers"
+        ],
+        "recommendation": "Urgent: Regulate eye pressure to prevent further vision loss. Schedule immediate test."
+    },
+    {
+        "name": "Retinal Detachment",
+        "keywords": [
+            "floater",
+            "flash",
+            "curtain",
+            "retina",
+            "shadow",
+            "veil",
+            "cobweb",
+            "black"
+        ],
+        "min_confidence": 90,
+        "max_confidence": 99,
+        "findings": [
+            "Retinal tear or hole suspected",
+            "Vitreous separation indicated",
+            "Macula status uncertain",
+            "Shadow in peripheral field",
+            "Separation of retina from underlying tissue"
+        ],
+        "recommendation": "EMERGENCY: Immediate surgical intervention required. Go to hospital immediately."
+    },
+    {
+        "name": "Dry Eye Syndrome",
+        "keywords": [
+            "dry",
+            "itch",
+            "burn",
+            "red",
+            "gritty",
+            "watery",
+            "sand",
+            "strain",
+            "computer",
+            "tired"
+        ],
+        "min_confidence": 85,
+        "max_confidence": 95,
+        "findings": [
+            "Tear film instability",
+            "Corneal inflammation signs",
+            "Conjunctival redness",
+            "Rapid tear breakup time",
+            "Insufficient tear production"
+        ],
+        "recommendation": "Prescribe artificial tears and warm compresses. Avoid screen strain."
+    },
+    {
+        "name": "Diabetic Retinopathy",
+        "keywords": [
+            "diabetes",
+            "sugar",
+            "diabetic",
+            "spot",
+            "dark",
+            "fluctuate",
+            "color",
+            "blood"
+        ],
+        "min_confidence": 82,
+        "max_confidence": 94,
+        "findings": [
+            "Microaneurysms detected",
+            "Retinal hemorrhages",
+            "Macular edema signs",
+            "Exudates visible",
+            "Abnormal blood vessel growth"
+        ],
+        "recommendation": "Strict blood sugar control and laser therapy assessment. Annual dilated exam needed."
+    },
+    {
+        "name": "Age-Related Macular Degeneration",
+        "keywords": [
+            "center",
+            "central",
+            "distort",
+            "line",
+            "wavy",
+            "amd",
+            "macula",
+            "spot",
+            "face"
+        ],
+        "min_confidence": 75,
+        "max_confidence": 90,
+        "findings": [
+            "Drusen deposits in macula",
+            "Central vision distortion",
+            "Pigmentary changes",
+            "Possible neovascularization",
+            "Loss of central vision clarity"
+        ],
+        "recommendation": "AREDS2 supplements may be recommended. Monitor with Amsler grid."
+    },
+    {
+        "name": "Conjunctivitis (Pink Eye)",
+        "keywords": [
+            "pink",
+            "crust",
+            "discharge",
+            "sticky",
+            "swollen",
+            "infect",
+            "virus",
+            "bacterial",
+            "contagious"
+        ],
+        "min_confidence": 88,
+        "max_confidence": 96,
+        "findings": [
+            "Conjunctival injection (Redness)",
+            "Purulent or watery discharge",
+            "Eyelid swelling",
+            "Follicular reaction",
+            "Inflammation of the conjunctiva"
+        ],
+        "recommendation": "Determine if bacterial or viral. Maintain hygiene. Antibiotic drops if bacterial."
+    },
+    {
+        "name": "Keratoconus",
+        "keywords": [
+            "cone",
+            "astigmatism",
+            "rub",
+            "sensitivity",
+            "ghost",
+            "distortion",
+            "cornea"
+        ],
+        "min_confidence": 80,
+        "max_confidence": 92,
+        "findings": [
+            "Corneal thinning detected",
+            "Cone-shaped cornea structure",
+            "Irregular astigmatism present",
+            "Reduced best-corrected vision"
+        ],
+        "recommendation": "Corneal topography scan required. Consider cross-linking or specialized contact lenses."
+    },
+    {
+        "name": "Uveitis",
+        "keywords": [
+            "uvea",
+            "inflammation",
+            "immune",
+            "pain",
+            "light",
+            "photophobia",
+            "floaters"
+        ],
+        "min_confidence": 78,
+        "max_confidence": 88,
+        "findings": [
+            "Cells and flare in anterior chamber",
+            "Inflammation of uveal tract",
+            "Synechiae formation possible",
+            "Possible vitreous haze"
+        ],
+        "recommendation": "Requires urgent ophthalmologist evaluation. Steroid drops and cycloplegics often prescribed."
+    },
+    {
+        "name": "Blepharitis",
+        "keywords": [
+            "eyelid",
+            "flake",
+            "dandruff",
+            "oil",
+            "lash",
+            "crusty",
+            "gland"
+        ],
+        "min_confidence": 85,
+        "max_confidence": 94,
+        "findings": [
+            "Inflammation of eyelid margins",
+            "Blocked Meibomian glands",
+            "Crusty debris on eyelashes",
+            "Red and swollen eyelids"
+        ],
+        "recommendation": "Daily eyelid hygiene with warm compresses and gentle scrubbing. Antibiotic ointment if severe."
+    },
+    {
+        "name": "Strabismus (Crossed Eyes)",
+        "keywords": [
+            "cross",
+            "turn",
+            "align",
+            "misalign",
+            "double",
+            "muscle",
+            "lazy"
+        ],
+        "min_confidence": 90,
+        "max_confidence": 98,
+        "findings": [
+            "Misalignment of visual axes",
+            "Weak eye muscle control",
+            "Suppression of image from one eye",
+            "Lack of depth perception"
+        ],
+        "recommendation": "Consult pediatric ophthalmologist. Glasses, patching therapy, or surgery may be needed."
+    },
+    {
+        "name": "Presbyopia",
+        "keywords": [
+            "read",
+            "text",
+            "arm",
+            "close",
+            "focus",
+            "age",
+            "near"
+        ],
+        "min_confidence": 92,
+        "max_confidence": 99,
+        "findings": [
+            "Inability to focus on near objects",
+            "Hardening of natural lens",
+            "Need for reading glasses",
+            "Normal distance vision (if no other errors)"
+        ],
+        "recommendation": "Reading glasses or bifocals required. Normal part of aging process."
+    },
+    {
+        "name": "Pterygium (Surfer's Eye)",
+        "keywords": [
+            "growth",
+            "tissue",
+            "sun",
+            "wind",
+            "surf",
+            "corner",
+            "white"
+        ],
+        "min_confidence": 85,
+        "max_confidence": 95,
+        "findings": [
+            "Wedge-shaped growth on cornea",
+            "Conjunctival tissue encroachment",
+            "Astigmatism induction possible",
+            "Chronic redness and irritation"
+        ],
+        "recommendation": "Protect from UV light. Lubricant drops. Surgery if vision is obstructed."
+    },
+    {
+        "name": "Eye Stroke",
+        "keywords": [
+            "sudden",
+            "blind",
+            "painless",
+            "top",
+            "bottom",
+            "darkness",
+            "artery"
+        ],
+        "min_confidence": 80,
+        "max_confidence": 90,
+        "findings": [
+            "Retinal artery or vein occlusion",
+            "Sudden loss of vision in one eye",
+            "Pale retina or cherry-red spot",
+            "Swollen optic nerve"
+        ],
+        "recommendation": "MEDICAL EMERGENCY. Immediate stroke evaluation required at ER."
+    },
+    {
+        "name": "Color Blindness",
+        "keywords": [
+            "color",
+            "shade",
+            "distinguish",
+            "red-green",
+            "mix",
+            "traffic"
+        ],
+        "min_confidence": 88,
+        "max_confidence": 96,
+        "findings": [
+            "Difficulty distinguishing specific colors",
+            "Potential X-linked genetic trait",
+            "Normal visual acuity otherwise",
+            "Reduced color spectrum perception"
+        ],
+        "recommendation": "Ishihara color test required. No cure, but special lenses can help contrast."
+    }
+]
