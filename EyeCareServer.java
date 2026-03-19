@@ -51,6 +51,7 @@ public class EyeCareServer {
         server.createContext("/api/analyze", new AnalysisHandler());
         server.createContext("/api/book-appointment", new AppointmentHandler());
         server.createContext("/api/save-patient", new PatientHandler());
+        server.createContext("/api/log", new LogHandler());
         server.createContext("/api/get-report", new ReportHandler());
         server.createContext("/health", new HealthHandler());
 
@@ -341,6 +342,23 @@ public class EyeCareServer {
             System.out.println("📁 Data stored: " + path);
         } catch (Exception e) {
             System.err.println("⚠️ Error storing data: " + e.getMessage());
+        }
+    }
+
+    // Log Handler - receives client-side logs
+    static class LogHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (handleOPTIONS(exchange)) return;
+            if (!"POST".equals(exchange.getRequestMethod())) {
+                sendJsonResponse(exchange, "{\"error\":\"Method not allowed\"}", 405);
+                return;
+            }
+            String body = readRequestBody(exchange);
+            System.out.println("📝 Client log: " + body);
+            // Save to file for later inspection
+            saveToFile("client_log", body);
+            sendJsonResponse(exchange, "{\"status\":\"ok\"}", 200);
         }
     }
 
