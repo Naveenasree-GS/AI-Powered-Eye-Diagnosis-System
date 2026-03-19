@@ -41,6 +41,14 @@ body {
     display: flex;
     list-style: none;
     gap: 2rem;
+/* Ensure video content scales nicely and remains responsive */
+.eye-video {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 60vh;
+    object-fit: cover;
+}
     flex: 1;
 }
 
@@ -49,6 +57,17 @@ body {
     text-decoration: none;
     transition: all 0.3s ease;
     font-weight: 500;
+}
+/* Canvas overlay sits on top of the video and scales with it */
+#gazeCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: block;
+    z-index: 6;
 }
 
 /* Health Status Indicator */
@@ -598,6 +617,14 @@ body {
 
     .scanner-container {
         padding: 1rem;
+    }
+    .eye-video {
+        max-height: 45vh;
+        border-radius: 10px;
+        border-width: 2px;
+    }
+    #gazeCanvas {
+        border-radius: 10px;
     }
 
     .form-card {

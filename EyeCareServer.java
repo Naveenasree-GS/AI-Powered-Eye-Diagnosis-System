@@ -1,21 +1,48 @@
 import com.sun.net.httpserver.*;
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.file.*;
 
 public class EyeCareServer {
     public static void main(String[] args) throws Exception {
-        int port = 8000;
-        int healthPort = 4000;
+        // Read environment / system properties
         String projectDir = System.getProperty("user.dir");
 
-        // Create data directory
-        File dataDir = new File(projectDir + "/data");
+        String portEnv = System.getenv("PORT");
+        int port = 8000;
+        if (portEnv != null && !portEnv.isEmpty()) {
+            try {
+                port = Integer.parseInt(portEnv);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid PORT value, falling back to 8000");
+            }
+        }
+
+        String dataDirEnv = System.getenv().getOrDefault("DATA_DIR", "data");
+        String appEnv = System.getenv().getOrDefault("APP_ENV", "development");
+        String logLevel = System.getenv().getOrDefault("LOG_LEVEL", "info");
+
+        // Create data directory (relative to projectDir)
+        File dataDir = new File(projectDir + "/" + dataDirEnv);
         if (!dataDir.exists())
             dataDir.mkdirs();
 
-        // Main server on port 8000
-        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+        // Main server on configured port (Render and many platforms expect a single port)
+        HttpServer server = null;
+        try {
+            server = HttpServer.create(new InetSocketAddress(port), 0);
+        } catch (java.net.BindException be) {
+            System.err.println("Port " + port + " is in use. Attempting to find a free port...");
+            int freePort = findAvailablePort();
+            if (freePort <= 0) {
+                System.err.println("Could not find an available port. Exiting.");
+                throw be;
+            }
+            System.err.println("Using fallback port: " + freePort);
+            port = freePort;
+            server = HttpServer.create(new InetSocketAddress(port), 0);
+        }
 
         // Create a context for serving static files
         server.createContext("/", new StaticFileHandler(projectDir));
@@ -30,17 +57,13 @@ public class EyeCareServer {
         server.setExecutor(java.util.concurrent.Executors.newFixedThreadPool(10));
         server.start();
 
-        // Health check server on port 4000
-        HttpServer healthServer = HttpServer.create(new InetSocketAddress(healthPort), 0);
-        healthServer.createContext("/health", new HealthHandler());
-        healthServer.setExecutor(java.util.concurrent.Executors.newFixedThreadPool(5));
-        healthServer.start();
+        // Note: using single server for both API and health endpoint (platforms like Render provide one PORT)
 
         System.out.println("========================================");
         System.out.println("🚀 Eye Care AI Server Started");
         System.out.println("========================================");
         System.out.println("Main Server running at: http://localhost:" + port);
-        System.out.println("Health Check running at: http://localhost:" + healthPort + "/health");
+        System.out.println("Health Check available at: http://localhost:" + port + "/health");
         System.out.println("API Endpoints:");
         System.out.println("  POST /api/analyze");
         System.out.println("  POST /api/book-appointment");
@@ -48,6 +71,8 @@ public class EyeCareServer {
         System.out.println("  GET  /api/get-report");
         System.out.println("  GET  /health");
         System.out.println("Project directory: " + projectDir);
+        System.out.println("App environment: " + appEnv);
+        System.out.println("Log level: " + logLevel);
         System.out.println("Press Ctrl+C to stop the server");
         System.out.println("========================================");
     }
@@ -74,7 +99,9 @@ public class EyeCareServer {
                 response.append("\"reports\":\"/api/get-report\",");
                 response.append("\"health\":\"/health\"");
                 response.append("},");
-                response.append("\"frontend\":\"http://localhost:8000\",");
+                String frontendPort = System.getenv("PORT");
+                if (frontendPort == null || frontendPort.isEmpty()) frontendPort = "8000";
+                response.append("\"frontend\":\"http://localhost:").append(frontendPort).append("\",");
                 response.append("\"message\":\"Backend server is running and operational\"");
                 response.append("}");
 
@@ -100,6 +127,15 @@ public class EyeCareServer {
         if (minutes > 0)
             return minutes + " minutes";
         return seconds + " seconds";
+    }
+
+    static int findAvailablePort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            socket.setReuseAddress(true);
+            return socket.getLocalPort();
+        } catch (IOException e) {
+            return -1;
+        }
     }
 
     // Analysis Handler - Processes eye scan analysis
