@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sign In - EyeCare AI</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="js/auth.js" defer></script>
+  <style>
+    .login-page { display:flex; align-items:center; justify-content:center; min-height:100vh; background: linear-gradient(135deg,#667eea,#764ba2); }
+    .login-card { background: white; padding: 2rem; border-radius:12px; width:100%; max-width:420px; box-shadow:0 10px 30px rgba(0,0,0,0.2); }
+    .login-card h2{ color:#333; margin-bottom:0.25rem }
+    .login-card p{ color:#666; margin-bottom:1rem }
+  </style>
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-card">
+      <h2>Welcome to EyeCare AI</h2>
+      <p>Select your role to continue</p>
+
+      <div style="display:flex; gap:0.75rem; margin-bottom:1rem;">
+        <a class="btn btn-primary" style="flex:1; text-align:center; display:inline-flex; align-items:center; justify-content:center;" href="/index.html#scanner">Patient</a>
+        <a class="btn btn-accent" style="flex:1; text-align:center; display:inline-flex; align-items:center; justify-content:center;" href="/views/doctor_register.html">Doctor</a>
+      </div>
+
+      <div style="margin-top:0.5rem;">
+        <label style="display:block; margin-bottom:0.5rem;">Sign in with email</label>
+        <input id="loginEmail" type="email" placeholder="you@example.com" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; margin-bottom:0.5rem;">
+        <input id="loginPassword" type="password" placeholder="Password" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; margin-bottom:0.75rem;">
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn btn-primary" style="flex:1;" onclick="submitLoginForm()">Sign In</button>
+          <a href="index.html" class="btn btn-secondary" style="flex:1; display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">Home</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

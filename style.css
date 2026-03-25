@@ -815,6 +815,11 @@ body {
     line-height: 1.6;
 }
 
+/* Login modal overrides to ensure visibility on all pages */
+#loginModal .modal-content { padding: 1.25rem; }
+#loginModal input { box-sizing: border-box; }
+
+
 .modal-body h4 {
     color: #667eea;
     margin-top: 1rem;

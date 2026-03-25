@@ -25,6 +25,9 @@
                 <span id="healthIndicator" class="health-indicator loading"></span>
                 <span id="healthText">Checking...</span>
             </div>
+            <div style="margin-left:12px;">
+                <a id="loginBtn" class="btn btn-secondary" href="login.html">Login</a>
+            </div>
         </div>
     </nav>
 
@@ -404,6 +407,31 @@
     <script src="js/image-processor.js"></script>
     <script src="app.js"></script>
     <script src="js/eye-scanner.js"></script>
+    <script src="js/auth.js"></script>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:420px;">
+            <span class="close-modal" onclick="closeLoginModal()">&times;</span>
+            <h3 style="color:#667eea; margin-bottom:0.5rem;">Sign In</h3>
+            <p style="color:#666; margin-bottom:1rem;">Choose your role to continue</p>
+
+            <div style="display:flex; gap:0.75rem; margin-bottom:1rem;">
+                <button class="btn btn-primary" style="flex:1;" onclick="submitLogin('patient')">Patient</button>
+                <button class="btn btn-accent" style="flex:1;" onclick="submitLogin('doctor')">Doctor</button>
+            </div>
+
+            <div style="margin-top:0.5rem; font-size:0.9rem; color:#555;">
+                <label style="display:block; margin-bottom:0.5rem;">Or sign in with email</label>
+                <input id="loginEmail" type="email" placeholder="you@example.com" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; margin-bottom:0.5rem;">
+                <input id="loginPassword" type="password" placeholder="Password" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+                    <button class="btn btn-primary" style="flex:1;" onclick="submitLoginForm()">Sign In</button>
+                    <button class="btn btn-secondary" style="flex:1;" onclick="closeLoginModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

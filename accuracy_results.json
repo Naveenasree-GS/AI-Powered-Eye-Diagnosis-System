@@ -1,0 +1,105 @@
+{
+  "total": 14,
+  "correct": 14,
+  "accuracy": 100,
+  "details": [
+    {
+      "patient": "Naveenasree",
+      "ground_raw": "Retinal Detachment",
+      "ground": "Retinal Detachment",
+      "pred": "Retinal Detachment",
+      "match": true
+    },
+    {
+      "patient": "rakey",
+      "ground_raw": "Retinal Analysis: EMMETROPIA (Normal Sight) (-0.30 D)",
+      "ground": "Emmetropia",
+      "pred": "Emmetropia",
+      "match": true
+    },
+    {
+      "patient": "n",
+      "ground_raw": "Retinal Analysis: EMMETROPIA (Normal Sight) (-0.30 D)",
+      "ground": "Emmetropia",
+      "pred": "Emmetropia",
+      "match": true
+    },
+    {
+      "patient": "jayashree",
+      "ground_raw": "Retinal Analysis: EMMETROPIA (Normal Sight) (-0.30 D)",
+      "ground": "Emmetropia",
+      "pred": "Emmetropia",
+      "match": true
+    },
+    {
+      "patient": "geetha",
+      "ground_raw": "Presbyopia",
+      "ground": "Presbyopia",
+      "pred": "Presbyopia",
+      "match": true
+    },
+    {
+      "patient": "anjali",
+      "ground_raw": "Retinal Analysis: HIGH MYOPIA (Negative Sight) (-4.82 D)",
+      "ground": "High Myopia",
+      "pred": "High Myopia",
+      "match": true
+    },
+    {
+      "patient": "navi",
+      "ground_raw": "Retinal Analysis: MILD MYOPIA (Negative Sight) (-0.22 D)",
+      "ground": "Mild Myopia",
+      "pred": "Mild Myopia",
+      "match": true
+    },
+    {
+      "patient": "navee",
+      "ground_raw": "Retinal Analysis: MILD MYOPIA (Negative Sight) (-0.22 D)",
+      "ground": "Mild Myopia",
+      "pred": "Mild Myopia",
+      "match": true
+    },
+    {
+      "patient": "Anonymous Patient",
+      "ground_raw": "Retinal Analysis: HIGH MYOPIA (Negative Sight) (-4.82 D)",
+      "ground": "High Myopia",
+      "pred": "High Myopia",
+      "match": true
+    },
+    {
+      "patient": "Anonymous Patient",
+      "ground_raw": "Retinal Analysis: MILD MYOPIA (Negative Sight) (-0.81 D)",
+      "ground": "Mild Myopia",
+      "pred": "Mild Myopia",
+      "match": true
+    },
+    {
+      "patient": "vin",
+      "ground_raw": "Cataract",
+      "ground": "Cataract",
+      "pred": "Cataract",
+      "match": true
+    },
+    {
+      "patient": "kaviya",
+      "ground_raw": "Retinal Analysis: HIGH HYPEROPIA (Positive Sight) (2.67 D)",
+      "ground": "High Hyperopia",
+      "pred": "High Hyperopia",
+      "match": true
+    },
+    {
+      "patient": "ammu",
+      "ground_raw": "Retinal Analysis: HIGH HYPEROPIA (Positive Sight) (3.77 D)",
+      "ground": "High Hyperopia",
+      "pred": "High Hyperopia",
+      "match": true
+    },
+    {
+      "patient": "srija",
+      "ground_raw": "Retinal Analysis: EMMETROPIA (Normal Sight) (0.20 D)",
+      "ground": "Emmetropia",
+      "pred": "Emmetropia",
+      "match": true
+    }
+  ]
+}

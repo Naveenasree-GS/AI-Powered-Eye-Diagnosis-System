@@ -3,6 +3,18 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.file.*;
+import java.security.SecureRandom;
+import java.util.Base64;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import java.security.spec.KeySpec;
+import java.util.Map;
+import java.util.HashMap;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class EyeCareServer {
     public static void main(String[] args) throws Exception {
@@ -53,6 +65,11 @@ public class EyeCareServer {
         server.createContext("/api/save-patient", new PatientHandler());
         server.createContext("/api/log", new LogHandler());
         server.createContext("/api/get-report", new ReportHandler());
+        // Doctor auth and OTP endpoints
+        server.createContext("/api/doctor/request-otp", new DoctorOTPRequestHandler());
+        server.createContext("/api/doctor/verify-otp", new DoctorOTPVerifyHandler());
+        server.createContext("/api/doctor/register", new DoctorRegisterHandler());
+        server.createContext("/api/doctor/login", new DoctorLoginHandler());
         server.createContext("/health", new HealthHandler());
 
         server.setExecutor(java.util.concurrent.Executors.newFixedThreadPool(10));
@@ -167,7 +184,14 @@ public class EyeCareServer {
 
                 sendJsonResponse(exchange, response.toString(), 200);
                 saveToFile("analysis", requestBody);
-                System.out.println("✓ Analysis processed and stored successfully");
+                // Also persist analysis/scan results into the patient database so
+                // scans appear alongside patient records for easier retrieval.
+                try {
+                    addToDatabase(requestBody);
+                    System.out.println("✓ Analysis processed and stored successfully (also added to patients_db)");
+                } catch (Exception e) {
+                    System.err.println("⚠️ Failed to add analysis to patients_db: " + e.getMessage());
+                }
             } else {
                 sendJsonResponse(exchange, "{\"error\":\"Method not allowed\"}", 405);
             }
@@ -215,7 +239,18 @@ public class EyeCareServer {
                 System.out.println("👤 Patient data saved: " + requestBody);
 
                 saveToFile("patient", requestBody);
-                addToDatabase(requestBody);
+
+                // Try to merge this patient/scan into existing patients_db.json
+                try {
+                    boolean merged = mergeIntoPatientsDb(requestBody);
+                    if (!merged) {
+                        // Fallback: append as a new record
+                        addToDatabase(requestBody);
+                    }
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error merging patient data, falling back to append: " + e.getMessage());
+                    addToDatabase(requestBody);
+                }
 
                 StringBuilder response = new StringBuilder();
                 response.append("{");
@@ -228,6 +263,56 @@ public class EyeCareServer {
             } else {
                 sendJsonResponse(exchange, "{\"error\":\"Method not allowed\"}", 405);
             }
+        }
+    }
+
+    // Attempt to merge incoming patient JSON into the patients_db.json by matching on patient name.
+    // Returns true if a merge/update occurred, false if no matching patient was found.
+    static synchronized boolean mergeIntoPatientsDb(String incomingJson) {
+        try {
+            String dbPath = "data/patients_db.json";
+            File dbFile = new File(dbPath);
+            String current = "[]";
+            if (dbFile.exists()) {
+                current = new String(Files.readAllBytes(dbFile.toPath()), java.nio.charset.StandardCharsets.UTF_8);
+                if (current.trim().isEmpty()) current = "[]";
+            }
+
+            // Try to extract a patient name from the incoming JSON (naive extractor)
+            String name = extractJsonField(incomingJson, "name");
+            if (name == null || name.trim().isEmpty()) {
+                return false; // nothing to match against
+            }
+
+            // Look for an object in the array that contains the same "name":"<name>" pattern
+            Pattern p = Pattern.compile("\\{[^}]*\\\"name\\\"\\s*:\\s*\\\"" + Pattern.quote(name) + "\\\"[^}]*\\}", Pattern.DOTALL);
+            Matcher m = p.matcher(current);
+            if (m.find()) {
+                String existingObj = m.group();
+
+                String updatedObj = existingObj;
+                if (existingObj.contains("\"scans\"")) {
+                    // Insert new scan JSON at the start of the scans array
+                    updatedObj = existingObj.replaceFirst("(\\\"scans\\\"\\s*:\\s*\\[)(\\s*)", "$1" + incomingJson + ",$2");
+                } else {
+                    // Add a scans array with the incoming JSON as first element
+                    updatedObj = existingObj.replaceFirst("}$", ",\"scans\":[" + incomingJson + "]}");
+                }
+
+                // Replace the object in the DB content
+                String before = current.substring(0, m.start());
+                String after = current.substring(m.end());
+                String newContent = before + updatedObj + after;
+
+                Files.write(dbFile.toPath(), newContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                System.out.println("💾 Merged patient scan into: " + dbFile.getPath());
+                return true;
+            }
+
+            return false;
+        } catch (Exception e) {
+            System.err.println("⚠️ mergeIntoPatientsDb error: " + e.getMessage());
+            return false;
         }
     }
 
@@ -334,6 +419,30 @@ public class EyeCareServer {
         os.close();
     }
 
+    // Very small JSON extractor for top-level string/number/boolean fields (demo only)
+    static String extractJsonField(String json, String field) {
+        if (json == null || field == null) return null;
+        try {
+            // look for "field": "value"
+            Pattern p = Pattern.compile("\"" + Pattern.quote(field) + "\"\\s*:\\s*\\\"([^\\\"]*)\\\"");
+            Matcher m = p.matcher(json);
+            if (m.find()) return m.group(1);
+
+            // look for numeric or boolean: "field": 12345 or "field": true
+            p = Pattern.compile("\"" + Pattern.quote(field) + "\"\\s*:\\s*([^,}\n\\r]+)");
+            m = p.matcher(json);
+            if (m.find()) {
+                String val = m.group(1).trim();
+                // strip quotes if present
+                if (val.startsWith("\"") && val.endsWith("\"")) return val.substring(1, val.length()-1);
+                return val.replaceAll("[\n\r\"]", "");
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return null;
+    }
+
     static void saveToFile(String type, String content) {
         try {
             String timestamp = String.valueOf(System.currentTimeMillis());
@@ -342,6 +451,60 @@ public class EyeCareServer {
             System.out.println("📁 Data stored: " + path);
         } catch (Exception e) {
             System.err.println("⚠️ Error storing data: " + e.getMessage());
+        }
+    }
+
+    // Simple PBKDF2 password hashing
+    static String hashPassword(String password, byte[] salt) {
+        try {
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 10000, 256);
+            byte[] hash = skf.generateSecret(spec).getEncoded();
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    static byte[] generateSalt() {
+        byte[] salt = new byte[16];
+        new SecureRandom().nextBytes(salt);
+        return salt;
+    }
+
+    static String hmacSha256(String data, String secret) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] sig = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(sig);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    static String issueToken(Map<String, Object> payload) {
+        try {
+            String header = Base64.getUrlEncoder().withoutPadding().encodeToString("{\"alg\":\"HS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
+            StringBuilder pb = new StringBuilder();
+            pb.append("{");
+            boolean first = true;
+            for (Map.Entry<String, Object> e : payload.entrySet()) {
+                if (!first) pb.append(',');
+                first = false;
+                pb.append('"').append(e.getKey()).append('"').append(':');
+                Object v = e.getValue();
+                if (v instanceof Number) pb.append(v.toString());
+                else pb.append('"').append(v.toString()).append('"');
+            }
+            pb.append('}');
+            String payloadEncoded = Base64.getUrlEncoder().withoutPadding().encodeToString(pb.toString().getBytes(StandardCharsets.UTF_8));
+            String signingInput = header + "." + payloadEncoded;
+            String secret = System.getenv().getOrDefault("JWT_SECRET", "eyecare_dev_secret");
+            String sig = hmacSha256(signingInput, secret);
+            return signingInput + "." + sig;
+        } catch (Exception e) {
+            return null;
         }
     }
 
@@ -359,6 +522,226 @@ public class EyeCareServer {
             // Save to file for later inspection
             saveToFile("client_log", body);
             sendJsonResponse(exchange, "{\"status\":\"ok\"}", 200);
+        }
+    }
+
+    // Doctor OTP Request Handler - generates OTP and stores tx
+    static class DoctorOTPRequestHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (handleOPTIONS(exchange)) return;
+            if (!"POST".equals(exchange.getRequestMethod())) {
+                sendJsonResponse(exchange, "{\"error\":\"Method not allowed\"}", 405);
+                return;
+            }
+            String body = readRequestBody(exchange);
+            // Expecting JSON: {"mobile":"..."}
+            String mobile = extractJsonField(body, "mobile");
+            if (mobile == null) {
+                sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"mobile required\"}", 400);
+                return;
+            }
+
+            String txId = "tx_" + System.currentTimeMillis() + "_" + (new SecureRandom().nextInt(900)+100);
+            String otp = String.format("%06d", new SecureRandom().nextInt(1000000));
+
+            long expires = System.currentTimeMillis() + 5 * 60 * 1000; // 5 minutes
+
+            String otpRecord = "{\"mobile\":\"" + mobile + "\",\"otp\":\"" + otp + "\",\"expires\":" + expires + ",\"attempts\":0,\"verified\":false}";
+            try {
+                Path p = Paths.get("data/otp_" + txId + ".json");
+                Files.write(p, otpRecord.getBytes(StandardCharsets.UTF_8));
+            } catch (Exception e) {
+                System.err.println("Failed to write OTP file: " + e.getMessage());
+            }
+
+            // In production send SMS via provider. Here we log OTP for demo.
+            System.out.println("[OTP] txId=" + txId + " mobile=" + mobile + " otp=" + otp);
+
+            String masked = mobile.replaceAll("(\\d{2})\\d+(\\d{2})", "$1****$2");
+            sendJsonResponse(exchange, "{\"status\":\"ok\",\"txId\":\"" + txId + "\",\"maskedMobile\":\"" + masked + "\"}", 200);
+        }
+    }
+
+    // Doctor OTP Verify Handler
+    static class DoctorOTPVerifyHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (handleOPTIONS(exchange)) return;
+            if (!"POST".equals(exchange.getRequestMethod())) {
+                sendJsonResponse(exchange, "{\"error\":\"Method not allowed\"}", 405);
+                return;
+            }
+            String body = readRequestBody(exchange);
+            String txId = extractJsonField(body, "txId");
+            String otp = extractJsonField(body, "otp");
+            if (txId == null || otp == null) {
+                sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"txId and otp required\"}", 400);
+                return;
+            }
+            Path p = Paths.get("data/otp_" + txId + ".json");
+            if (!Files.exists(p)) {
+                sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"Invalid txId\"}", 400);
+                return;
+            }
+            String content = new String(Files.readAllBytes(p), StandardCharsets.UTF_8);
+            String storedOtp = extractJsonField(content, "otp");
+            String expiresStr = extractJsonField(content, "expires");
+            long expires = 0;
+            try { expires = Long.parseLong(expiresStr); } catch(Exception e){ }
+            if (System.currentTimeMillis() > expires) {
+                sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"OTP expired\"}", 400);
+                return;
+            }
+            if (!otp.equals(storedOtp)) {
+                // increment attempts
+                String attemptsStr = extractJsonField(content, "attempts");
+                int attempts = 0; try{ attempts = Integer.parseInt(attemptsStr); } catch(Exception e){}
+                attempts++;
+                content = content.replaceFirst("\"attempts\":\\d+", "\"attempts\":"+attempts);
+                Files.write(p, content.getBytes(StandardCharsets.UTF_8));
+                sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"Invalid OTP\"}", 400);
+                return;
+            }
+            // mark verified
+            content = content.replaceFirst("\"verified\":false", "\"verified\":true");
+            Files.write(p, content.getBytes(StandardCharsets.UTF_8));
+            sendJsonResponse(exchange, "{\"status\":\"ok\",\"message\":\"OTP verified\"}", 200);
+        }
+    }
+
+    // Doctor Register Handler - expects JSON with txId and details (cert as base64 optional)
+    static class DoctorRegisterHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (handleOPTIONS(exchange)) return;
+            if (!"POST".equals(exchange.getRequestMethod())) {
+                sendJsonResponse(exchange, "{\"error\":\"Method not allowed\"}", 405);
+                return;
+            }
+            String body = readRequestBody(exchange);
+            String txId = extractJsonField(body, "txId");
+            String email = extractJsonField(body, "email");
+            String password = extractJsonField(body, "password");
+            String name = extractJsonField(body, "name");
+            String mbbs = extractJsonField(body, "mbbs");
+            String master = extractJsonField(body, "master");
+            String certData = extractJsonField(body, "certData");
+
+            if (txId==null || email==null || password==null) {
+                sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"txId, email and password required\"}", 400);
+                return;
+            }
+            Path otpPath = Paths.get("data/otp_" + txId + ".json");
+            if (!Files.exists(otpPath)) {
+                sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"Invalid txId\"}", 400);
+                return;
+            }
+            String otpContent = new String(Files.readAllBytes(otpPath), StandardCharsets.UTF_8);
+            String verified = extractJsonField(otpContent, "verified");
+            if (!"true".equals(verified)) {
+                sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"OTP not verified\"}", 400);
+                return;
+            }
+
+            // Save certificate if provided
+            String doctorId = "doc_" + System.currentTimeMillis();
+            String certPath = "";
+            if (certData != null && certData.startsWith("data:")) {
+                // certData format: data:application/pdf;base64,....
+                int comma = certData.indexOf(',');
+                String base64 = certData.substring(comma+1);
+                byte[] decoded = Base64.getDecoder().decode(base64);
+                Path certDir = Paths.get("data/certs"); if (!Files.exists(certDir)) Files.createDirectories(certDir);
+                certPath = "data/certs/" + doctorId + "_cert.bin";
+                Files.write(Paths.get(certPath), decoded);
+            }
+
+            byte[] salt = generateSalt();
+            String saltB64 = Base64.getEncoder().encodeToString(salt);
+            String hash = hashPassword(password, salt);
+
+            // Build doctor record
+            String record = "{" +
+                    "\"id\":\""+doctorId+"\"," +
+                    "\"email\":\""+email+"\"," +
+                    "\"name\":\""+(name==null?"":name)+"\"," +
+                    "\"mbbs\":\""+(mbbs==null?"":mbbs)+"\"," +
+                    "\"master\":\""+(master==null?"":master)+"\"," +
+                    "\"salt\":\""+saltB64+"\"," +
+                    "\"hash\":\""+hash+"\"," +
+                    "\"certPath\":\""+certPath+"\"," +
+                    "\"verified\":true"+
+                    "}";
+
+            // Append to doctors_db.json
+            Path db = Paths.get("data/doctors_db.json");
+            if (!Files.exists(db)) {
+                Files.write(db, ("["+record+"]").getBytes(StandardCharsets.UTF_8));
+            } else {
+                String cur = new String(Files.readAllBytes(db), StandardCharsets.UTF_8).trim();
+                if (cur.endsWith("]")) {
+                    cur = cur.substring(0, cur.length()-1);
+                    if (cur.length()>1 && !cur.trim().equals("[")) cur += ",";
+                    cur += record + "]";
+                    Files.write(db, cur.getBytes(StandardCharsets.UTF_8));
+                }
+            }
+
+            sendJsonResponse(exchange, "{\"status\":\"ok\",\"doctorId\":\""+doctorId+"\"}", 200);
+        }
+    }
+
+    // Doctor Login Handler
+    static class DoctorLoginHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (handleOPTIONS(exchange)) return;
+            if (!"POST".equals(exchange.getRequestMethod())) {
+                sendJsonResponse(exchange, "{\"error\":\"Method not allowed\"}", 405);
+                return;
+            }
+            String body = readRequestBody(exchange);
+            String email = extractJsonField(body, "email");
+            String password = extractJsonField(body, "password");
+            if (email==null||password==null) { sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"email and password required\"}",400); return; }
+
+            Path db = Paths.get("data/doctors_db.json");
+            if (!Files.exists(db)) { sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"no doctors registered\"}",400); return; }
+            String cur = new String(Files.readAllBytes(db), StandardCharsets.UTF_8);
+            // naive search
+            String lower = cur.toLowerCase();
+            if (!lower.contains(email.toLowerCase())) { sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"invalid credentials\"}",401); return; }
+            // parse entries - simple split by '},{'
+            String[] parts = cur.substring(1, cur.length()-1).split("\\},\\{");
+            for (String part : parts) {
+                String entry = part;
+                if (!entry.startsWith("{")) entry = "{"+entry;
+                if (!entry.endsWith("}")) entry = entry+"}";
+                String eEmail = extractJsonField(entry, "email");
+                if (eEmail!=null && eEmail.equalsIgnoreCase(email)) {
+                    String saltB64 = extractJsonField(entry, "salt");
+                    String hash = extractJsonField(entry, "hash");
+                    String id = extractJsonField(entry, "id");
+                    String verified = extractJsonField(entry, "verified");
+                    byte[] salt = Base64.getDecoder().decode(saltB64);
+                    String computed = hashPassword(password, salt);
+                    if (computed!=null && computed.equals(hash)) {
+                        if (!"true".equals(verified)) { sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"doctor not verified\"}",403); return; }
+                        Map<String,Object> payload = new HashMap<>();
+                        payload.put("sub", id);
+                        payload.put("role", "doctor");
+                        payload.put("email", email);
+                        payload.put("iat", System.currentTimeMillis());
+                        String token = issueToken(payload);
+                        sendJsonResponse(exchange, "{\"status\":\"ok\",\"token\":\""+token+"\"}",200);
+                        return;
+                    } else {
+                        sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"invalid credentials\"}",401); return;
+                    }
+                }
+            }
+            sendJsonResponse(exchange, "{\"status\":\"error\",\"message\":\"invalid credentials\"}",401);
         }
     }
 

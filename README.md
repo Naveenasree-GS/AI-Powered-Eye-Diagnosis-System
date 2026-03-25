@@ -21,8 +21,8 @@ This project is fully compatible with Visual Studio Code.
 1. Open this folder in VS Code.
 2. Open a terminal (`Ctrl+` `).
 3. Compile the server:
-   ```bash
-   javac EyeCareServer.java
+   ```bash http://localhost:8000
+  
    ```
 4. Run the server:
    ```bash
